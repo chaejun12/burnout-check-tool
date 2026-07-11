@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>빙글 번아웃 체크</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<style>
+:root{
+  --ice-bg:#EAF3F8;
+  --ice-soft:#D6E9F2;
+  --frost:#7FB6D9;
+  --ink:#1B3A52;
+  --ink-soft:#4A6B82;
+  --warm:#F5A25D;
+  --coral:#E8795A;
+  --card:#FFFFFF;
+  --radius:20px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{font-size:16px}
+body{
+  font-family:'Pretendard',-apple-system,sans-serif;
+  background:linear-gradient(180deg,var(--ice-bg) 0%,#F4F9FC 100%);
+  color:var(--ink);
+  min-height:100vh;
+  line-height:1.6;
+}
+.wrap{max-width:640px;margin:0 auto;padding:24px 20px 64px}
+.brand{
+  display:flex;align-items:center;gap:10px;
+  padding:8px 0 28px;
+}
+.brand .dot{
+  width:34px;height:34px;border-radius:50%;
+  background:radial-gradient(circle at 32% 30%,#BFE0F0,var(--frost));
+  display:flex;align-items:center;justify-content:center;
+  font-size:17px;
+}
+.brand h1{font-family:'Gowun Dodum',sans-serif;font-size:1.15rem;font-weight:400;letter-spacing:.02em}
+.brand span{font-size:.78rem;color:var(--ink-soft)}
+
+/* ---------- intro ---------- */
+.card{
+  background:var(--card);border-radius:var(--radius);
+  padding:34px 30px;
+  box-shadow:0 8px 28px rgba(27,58,82,.08);
+}
+.intro h2{
+  font-family:'Gowun Dodum',sans-serif;font-weight:400;
+  font-size:1.7rem;line-height:1.4;margin-bottom:16px;
+}
+.intro h2 em{font-style:normal;color:var(--coral)}
+.intro p{color:var(--ink-soft);font-size:.95rem;margin-bottom:12px}
+.intro .meta{
+  margin:22px 0;padding:16px 18px;border-radius:14px;
+  background:var(--ice-bg);font-size:.88rem;color:var(--ink);
+}
+.intro .meta b{color:var(--coral)}
+.scale-guide{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.scale-guide span{
+  font-size:.75rem;background:#fff;border:1px solid var(--ice-soft);
+  border-radius:99px;padding:3px 10px;color:var(--ink-soft);
+}
+.btn{
+  display:inline-block;width:100%;text-align:center;
+  background:var(--ink);color:#fff;border:none;cursor:pointer;
+  font-family:inherit;font-size:1rem;font-weight:600;
+  padding:16px;border-radius:14px;margin-top:10px;
+  transition:transform .15s,background .15s;
+}
+.btn:hover{background:#25506F;transform:translateY(-1px)}
+.btn:focus-visible{outline:3px solid var(--warm);outline-offset:2px}
+.disclaimer{font-size:.75rem;color:#8AA3B4;margin-top:16px;text-align:center}
+
+/* ---------- quiz ---------- */
+.progress{
+  height:8px;background:var(--ice-soft);border-radius:99px;
+  overflow:hidden;margin-bottom:8px;
+}
+.progress i{
+  display:block;height:100%;width:0;
+  background:linear-gradient(90deg,var(--frost),var(--warm));
+  border-radius:99px;transition:width .35s ease;
+}
+.progress-label{font-size:.78rem;color:var(--ink-soft);margin-bottom:22px;display:flex;justify-content:space-between}
+.q-part{
+  font-size:.75rem;font-weight:700;letter-spacing:.08em;
+  color:var(--coral);text-transform:uppercase;margin-bottom:10px;
+}
+.q-text{
+  font-family:'Gowun Dodum',sans-serif;font-weight:400;
+  font-size:1.35rem;line-height:1.5;min-height:4.2em;margin-bottom:26px;
+}
+.opts{display:flex;flex-direction:column;gap:10px}
+.opt{
+  display:flex;align-items:center;gap:14px;
+  background:#fff;border:1.5px solid var(--ice-soft);
+  border-radius:14px;padding:14px 16px;cursor:pointer;
+  font-family:inherit;font-size:.95rem;color:var(--ink);
+  text-align:left;transition:border-color .12s,background .12s,transform .12s;
+}
+.opt:hover{border-color:var(--frost);background:#F6FBFE}
+.opt:focus-visible{outline:3px solid var(--warm);outline-offset:2px}
+.opt.selected{border-color:var(--coral);background:#FFF4EF}
+.opt .num{
+  width:30px;height:30px;border-radius:50%;flex-shrink:0;
+  background:var(--ice-bg);color:var(--ink-soft);
+  display:flex;align-items:center;justify-content:center;
+  font-weight:700;font-size:.85rem;
+}
+.opt.selected .num{background:var(--coral);color:#fff}
+.nav-row{display:flex;justify-content:space-between;margin-top:24px}
+.back-btn{
+  background:none;border:none;color:var(--ink-soft);cursor:pointer;
+  font-family:inherit;font-size:.88rem;padding:8px 4px;
+}
+.back-btn:hover{color:var(--ink);text-decoration:underline}
+.back-btn:disabled{opacity:.3;cursor:default;text-decoration:none}
+
+/* ---------- results ---------- */
+.result-hero{
+  text-align:center;padding:36px 26px 30px;
+  border-radius:var(--radius);margin-bottom:18px;
+  background:var(--card);
+  box-shadow:0 8px 28px rgba(27,58,82,.08);
+}
+.thermo{
+  width:64px;height:220px;margin:0 auto 8px;position:relative;
+}
+.thermo .tube{
+  position:absolute;left:50%;transform:translateX(-50%);
+  top:0;width:26px;height:180px;
+  background:var(--ice-bg);border-radius:13px;
+  overflow:hidden;border:2px solid var(--ice-soft);
+}
+.thermo .fill{
+  position:absolute;bottom:0;left:0;width:100%;height:0;
+  background:linear-gradient(180deg,var(--warm),var(--coral));
+  transition:height 1.4s cubic-bezier(.22,1,.36,1);
+}
+.thermo .fill.cold{background:linear-gradient(180deg,#9FCCE6,var(--frost))}
+.thermo .bulb{
+  position:absolute;bottom:0;left:50%;transform:translateX(-50%);
+  width:52px;height:52px;border-radius:50%;
+  border:2px solid var(--ice-soft);
+  display:flex;align-items:center;justify-content:center;
+  font-size:22px;background:var(--ice-bg);
+  transition:background 1.2s;
+}
+.temp-num{
+  font-family:'Gowun Dodum',sans-serif;font-size:2.6rem;line-height:1;
+  margin-top:14px;
+}
+.temp-num small{font-size:1.2rem;color:var(--ink-soft)}
+.severity-tag{
+  display:inline-block;margin-top:10px;padding:6px 18px;border-radius:99px;
+  font-weight:700;font-size:.9rem;color:#fff;
+}
+.result-hero .desc{margin-top:14px;font-size:.92rem;color:var(--ink-soft)}
+
+.section-card{
+  background:var(--card);border-radius:var(--radius);
+  padding:26px 26px;margin-bottom:18px;
+  box-shadow:0 8px 28px rgba(27,58,82,.08);
+}
+.section-card h3{
+  font-family:'Gowun Dodum',sans-serif;font-weight:400;
+  font-size:1.15rem;margin-bottom:18px;
+}
+.bar-row{margin-bottom:14px}
+.bar-row .bar-head{
+  display:flex;justify-content:space-between;
+  font-size:.85rem;margin-bottom:5px;
+}
+.bar-row .bar-head b{font-weight:600}
+.bar-row .bar-head span{color:var(--ink-soft)}
+.bar-track{height:10px;background:var(--ice-bg);border-radius:99px;overflow:hidden}
+.bar-fill{
+  height:100%;width:0;border-radius:99px;
+  background:linear-gradient(90deg,var(--frost),var(--warm));
+  transition:width 1s ease .3s;
+}
+.bar-fill.hot{background:linear-gradient(90deg,var(--warm),var(--coral))}
+.top-cause{
+  background:linear-gradient(135deg,#FFF6EF,#FDEDE6);
+  border:1.5px solid #F6D9C8;
+}
+.top-cause .cause-label{
+  font-size:.75rem;font-weight:700;letter-spacing:.08em;color:var(--coral);
+  margin-bottom:6px;
+}
+.top-cause h3{margin-bottom:8px}
+.top-cause ul{margin:12px 0 0 2px;list-style:none}
+.top-cause li{
+  padding-left:24px;position:relative;font-size:.92rem;margin-bottom:9px;
+}
+.top-cause li::before{content:"❄";position:absolute;left:0;color:var(--frost)}
+.pro-note{
+  margin-top:14px;padding:12px 14px;border-radius:12px;
+  background:#fff;font-size:.85rem;color:var(--ink-soft);
+}
+.restart{margin-top:6px}
+.hidden{display:none}
+.fade{animation:fadeUp .35s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{transition:none!important;animation:none!important}
+}
+@media(max-width:480px){
+  .card,.section-card{padding:24px 20px}
+  .q-text{font-size:1.2rem}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="brand">
+    <div class="dot">❄️</div>
+    <div>
+      <h1>빙글 번아웃 체크</h1>
+      <span>모두가 겪지만, 아무도 혼자 버티지 않아도 된다</span>
+    </div>
+  </header>
+
+  <!-- INTRO -->
+  <section id="intro" class="card intro fade">
+    <h2>지금, 내 마음의 온도는<br><em>몇 도</em>일까요?</h2>
+    <p>번아웃의 <b>정도</b>와 <b>원인</b>을 동시에 확인하는 통합 검사입니다. MBI·BAT 기반 증상 점수와 4가지 원인 점수를 함께 산출해, 나에게 맞는 회복 방향을 알려드립니다.</p>
+    <div class="meta">
+      📋 총 <b>30문항</b> · 약 <b>5분</b> 소요<br>
+      🗓 <b>최근 2주 동안</b>의 전반적인 상태를 떠올리며 답해주세요.
+      <div class="scale-guide">
+        <span>0 전혀 그렇지 않다</span><span>1 거의 그렇지 않다</span><span>2 보통이다</span><span>3 꽤 그렇다</span><span>4 매우 그렇다</span>
+      </div>
+    </div>
+    <button class="btn" onclick="startQuiz()">검사 시작하기</button>
+    <p class="disclaimer">본 검사는 자기 이해를 돕는 선별 도구이며, 의학적 진단을 대체하지 않습니다.</p>
+  </section>
+
+  <!-- QUIZ -->
+  <section id="quiz" class="hidden">
+    <div class="progress"><i id="progressFill"></i></div>
+    <div class="progress-label"><span id="progressText"></span><span id="partText"></span></div>
+    <div class="card fade" id="qCard">
+      <div class="q-part" id="qPart"></div>
+      <div class="q-text" id="qText"></div>
+      <div class="opts" id="opts"></div>
+      <div class="nav-row">
+        <button class="back-btn" id="backBtn" onclick="goBack()">← 이전 문항</button>
+        <span style="font-size:.78rem;color:#8AA3B4">숫자키 0–4로도 응답할 수 있어요</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- RESULTS -->
+  <section id="result" class="hidden"></section>
+</div>
+
+<script>
+// ---------------- 문항 데이터 ----------------
+// type: 'symptom' | 'cause' / rev: 역채점 여부
+const QUESTIONS = [
+  // A. 감정적 소진
+  {part:'증상 · 감정적 소진', sub:'감정적 소진', type:'symptom', rev:false, text:'아침에 일어나서 오늘 해야 할 일을 생각하는 것만으로도 피곤하다.'},
+  {part:'증상 · 감정적 소진', sub:'감정적 소진', type:'symptom', rev:false, text:'근무가 끝나면, 몸과 마음이 방전된 것 같다.'},
+  {part:'증상 · 감정적 소진', sub:'감정적 소진', type:'symptom', rev:false, text:'주말 동안 휴식을 취한 후에도 기운 회복이 어렵다.'},
+  {part:'증상 · 감정적 소진', sub:'감정적 소진', type:'symptom', rev:false, text:'작은 업무도 예전보다 무겁게 느껴진다.'},
+  // B. 비인격화
+  {part:'증상 · 비인격화', sub:'비인격화', type:'symptom', rev:false, text:'요즘 내가 하는 일의 가치를 느끼지 못한다.'},
+  {part:'증상 · 비인격화', sub:'비인격화', type:'symptom', rev:false, text:'업무 중 만나는 사람들에게 무감각하다.'},
+  {part:'증상 · 비인격화', sub:'비인격화', type:'symptom', rev:false, text:'내가 열심히 해도 무언가 변할 것이라고 기대하지 않는다.'},
+  {part:'증상 · 비인격화', sub:'비인격화', type:'symptom', rev:false, text:'일을 할 때 대충 처리하고 넘길 때가 있다.'},
+  // C. 개인 성취감 저하
+  {part:'증상 · 개인 성취감 저하', sub:'개인 성취감 저하', type:'symptom', rev:false, text:'요즘은 일을 잘해내고 있다는 느낌이 줄어들었다.'},
+  {part:'증상 · 개인 성취감 저하', sub:'개인 성취감 저하', type:'symptom', rev:false, text:'목표나 계획을 세워도 예전만큼 불타지 않는다.'},
+  {part:'증상 · 개인 성취감 저하', sub:'개인 성취감 저하', type:'symptom', rev:true,  text:'내가 이룬 성과에 대해 보람을 느낀다.'},
+  {part:'증상 · 개인 성취감 저하', sub:'개인 성취감 저하', type:'symptom', rev:true,  text:'업무 중 발생하는 문제를 효과적으로 처리할 수 있다.'},
+  // D. 인지 저하
+  {part:'증상 · 인지 저하', sub:'인지 저하', type:'symptom', rev:false, text:'업무 중 집중력이 쉽게 흐트러진다.'},
+  {part:'증상 · 인지 저하', sub:'인지 저하', type:'symptom', rev:false, text:'예전보다 판단이나 결정에 더 많은 시간이 든다.'},
+  {part:'증상 · 인지 저하', sub:'인지 저하', type:'symptom', rev:false, text:'업무 내용을 읽거나 들어도 머리에 잘 들어오지 않는다.'},
+  {part:'증상 · 인지 저하', sub:'인지 저하', type:'symptom', rev:false, text:'일할 때 다른 일에 신경 쓰다가 실수한 적이 있다.'},
+  // E. 정서적 통제력 저하
+  {part:'증상 · 정서적 통제력 저하', sub:'정서적 통제력 저하', type:'symptom', rev:false, text:'사소한 일에 예민하게 반응한다.'},
+  {part:'증상 · 정서적 통제력 저하', sub:'정서적 통제력 저하', type:'symptom', rev:false, text:'평소라면 넘겼을 말에도 짜증이 난다.'},
+  {part:'증상 · 정서적 통제력 저하', sub:'정서적 통제력 저하', type:'symptom', rev:false, text:'뜻하지 않게 과하게 반응한 적이 있다.'},
+  // 원인 1. 업무량/시간 압박
+  {part:'원인 · 업무량/시간 압박', sub:'업무량/시간 압박', type:'cause', rev:false, text:'현재 하는 일이 너무 많다고 느껴진다.'},
+  {part:'원인 · 업무량/시간 압박', sub:'업무량/시간 압박', type:'cause', rev:false, text:'마감 일정이나 요청이 너무 많다.'},
+  // 원인 2. 보상/인정 부족
+  {part:'원인 · 보상/인정 부족', sub:'보상/인정 부족', type:'cause', rev:false, text:'내가 들이는 노력에 비해 인정받지 못한다.'},
+  {part:'원인 · 보상/인정 부족', sub:'보상/인정 부족', type:'cause', rev:false, text:'내가 맡고 있는 부분에 비해 보상이 적다.'},
+  {part:'원인 · 보상/인정 부족', sub:'보상/인정 부족', type:'cause', rev:true,  text:'나는 내가 맡고 있는 부분을 완벽히 수행한다.'},
+  // 원인 3. 관계/사회적 지지 부족
+  {part:'원인 · 관계/사회적 지지', sub:'관계/사회적 지지 부족', type:'cause', rev:true,  text:'내가 힘들 때 동료나 상사, 친구들에게 도움을 요청할 수 있을 것이다.'},
+  {part:'원인 · 관계/사회적 지지', sub:'관계/사회적 지지 부족', type:'cause', rev:false, text:'직장 내 어려움을 이해해주는 사람이 부족하다.'},
+  // 원인 4. 회복 자원 부족
+  {part:'원인 · 회복 자원 부족', sub:'회복 자원 부족', type:'cause', rev:false, text:'업무 중 숨을 돌릴 시간이 없다.'},
+  {part:'원인 · 회복 자원 부족', sub:'회복 자원 부족', type:'cause', rev:true,  text:'퇴근 후 하고 싶은 일이 있다.'},
+  {part:'원인 · 회복 자원 부족', sub:'회복 자원 부족', type:'cause', rev:true,  text:'퇴근 후 취미 생활 혹은 좋아하는 일을 하고 있다.'},
+  {part:'원인 · 회복 자원 부족', sub:'회복 자원 부족', type:'cause', rev:false, text:'쉬는 때에도 업무 메시지를 확인하지 않으면 불안하다.'}
+];
+
+const SCALE = ['전혀 그렇지 않다','거의 그렇지 않다','보통이다','꽤 그렇다','매우 그렇다'];
+
+// 심각도 구간 (증상 점수 0~100 정규화 기준)
+const SEVERITY = [
+  {min:0,  label:'안정',  color:'#5FA8D3', temp:'따뜻함', msg:'마음의 온도가 잘 유지되고 있어요. 지금의 회복 습관을 계속 지켜주세요.'},
+  {min:25, label:'주의',  color:'#F5A25D', temp:'서늘함', msg:'번아웃의 초기 신호가 보여요. 지금부터의 작은 관리가 큰 차이를 만듭니다.'},
+  {min:50, label:'경고',  color:'#E8795A', temp:'차가움', msg:'번아웃이 상당히 진행된 상태예요. 의식적인 회복 계획이 필요한 시점입니다.'},
+  {min:75, label:'위험',  color:'#C94F3D', temp:'얼어붙음', msg:'마음이 많이 얼어 있어요. 혼자 버티기보다 주변과 전문가의 도움을 받는 것을 권해요.'}
+];
+
+// 원인별 맞춤 솔루션
+const SOLUTIONS = {
+  '업무량/시간 압박': {
+    title:'업무량과 시간 압박이 마음을 얼리고 있어요',
+    tips:[
+      '이번 주 할 일을 모두 적고, "지금 안 해도 되는 것"부터 지워보세요.',
+      '90분 집중 + 10분 휴식의 타임박스로 업무를 쪼개보세요.',
+      '업무 조정이 필요하다면, 구체적인 업무 목록을 근거로 상사와 대화를 시도해보세요.',
+      '하루 중 짧더라도 "아무것도 하지 않는 5분"을 일정에 먼저 넣어두세요.'
+    ]
+  },
+  '보상/인정 부족': {
+    title:'노력에 비해 돌아오는 인정이 부족해요',
+    tips:[
+      '내가 해낸 일을 매주 기록해 성과를 눈에 보이게 만들어보세요.',
+      '피드백을 기다리기보다, 결과를 공유하며 먼저 의견을 요청해보세요.',
+      '외부 인정과 별개로, 스스로에게 주는 작은 보상 루틴을 만들어보세요.',
+      '지금의 노력이 향하는 나만의 목표를 다시 적어보세요.'
+    ]
+  },
+  '관계/사회적 지지 부족': {
+    title:'기댈 수 있는 연결이 부족해요',
+    tips:[
+      '신뢰할 수 있는 한 사람과 정기적으로 안부를 나누는 시간을 정해보세요.',
+      '"괜찮은 척" 대신, 작은 어려움부터 말로 꺼내는 연습을 해보세요.',
+      '직장 밖에서도 나를 이해해주는 모임이나 커뮤니티를 찾아보세요.',
+      '도움을 요청하는 것은 약함이 아니라 회복의 기술이에요.'
+    ]
+  },
+  '회복 자원 부족': {
+    title:'회복할 시간과 공간이 부족해요',
+    tips:[
+      '퇴근 후 30분, 업무 알림을 끄는 "해동 시간"을 정해보세요.',
+      '예전에 좋아했던 일 하나를 아주 작은 단위로 다시 시작해보세요.',
+      '업무 중에도 2~3시간마다 자리에서 일어나 짧게 숨을 돌리세요.',
+      '잠들기 전 스크린 대신 몸의 긴장을 푸는 루틴을 만들어보세요.'
+    ]
+  }
+};
+
+// ---------------- 상태 ----------------
+let current = 0;
+const answers = new Array(QUESTIONS.length).fill(null);
+
+function startQuiz(){
+  document.getElementById('intro').classList.add('hidden');
+  document.getElementById('quiz').classList.remove('hidden');
+  current = 0;
+  renderQuestion();
+  window.addEventListener('keydown', keyHandler);
+}
+
+function keyHandler(e){
+  if(document.getElementById('quiz').classList.contains('hidden')) return;
+  if(e.key >= '0' && e.key <= '4') selectAnswer(parseInt(e.key));
+  if(e.key === 'Backspace'){ e.preventDefault(); goBack(); }
+}
+
+function renderQuestion(){
+  const q = QUESTIONS[current];
+  document.getElementById('qPart').textContent = q.part;
+  document.getElementById('qText').textContent = 'Q' + (current+1) + '. ' + q.text;
+  document.getElementById('progressText').textContent = (current+1) + ' / ' + QUESTIONS.length;
+  document.getElementById('partText').textContent = q.type === 'symptom' ? '증상 점수 파트' : '원인 점수 파트';
+  document.getElementById('progressFill').style.width = ((current) / QUESTIONS.length * 100) + '%';
+  document.getElementById('backBtn').disabled = current === 0;
+
+  const opts = document.getElementById('opts');
+  opts.innerHTML = '';
+  SCALE.forEach((label, i)=>{
+    const b = document.createElement('button');
+    b.className = 'opt' + (answers[current] === i ? ' selected' : '');
+    b.innerHTML = '<span class="num">' + i + '</span>' + label;
+    b.onclick = ()=>selectAnswer(i);
+    opts.appendChild(b);
+  });
+
+  const card = document.getElementById('qCard');
+  card.classList.remove('fade'); void card.offsetWidth; card.classList.add('fade');
+}
+
+function selectAnswer(v){
+  answers[current] = v;
+  if(current < QUESTIONS.length - 1){
+    current++;
+    setTimeout(renderQuestion, 140);
+  } else {
+    setTimeout(showResults, 200);
+  }
+}
+
+function goBack(){
+  if(current > 0){ current--; renderQuestion(); }
+}
+
+// ---------------- 채점 ----------------
+function score(){
+  const symptomSubs = {}, causeSubs = {};
+  QUESTIONS.forEach((q, i)=>{
+    const raw = answers[i] ?? 0;
+    const val = q.rev ? 4 - raw : raw;
+    const bucket = q.type === 'symptom' ? symptomSubs : causeSubs;
+    if(!bucket[q.sub]) bucket[q.sub] = {sum:0, count:0};
+    bucket[q.sub].sum += val;
+    bucket[q.sub].count++;
+  });
+  const normalize = obj => Object.entries(obj).map(([name, s]) =>
+    ({name, pct: Math.round(s.sum / (s.count * 4) * 100)}));
+  const symptoms = normalize(symptomSubs);
+  const causes = normalize(causeSubs).sort((a,b)=>b.pct-a.pct);
+  const totalSym = Math.round(symptoms.reduce((a,s)=>a+s.pct,0) / symptoms.length);
+  return {symptoms, causes, totalSym};
+}
+
+function severityOf(pct){
+  return [...SEVERITY].reverse().find(s => pct >= s.min);
+}
+
+
+// ---------------- Supabase 저장 ----------------
+async function saveResult(payload){
+  const el = document.getElementById('saveStatus');
+  try{
+    const cfg = window.BINGLE_CONFIG || {};
+    if(!cfg.SUPABASE_URL || !cfg.SUPABASE_ANON_KEY){
+      console.warn('Supabase 설정이 비어 있어 저장을 건너뜁니다 (config.js 확인)');
+      return;
+    }
+    const sb = window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY);
+    const {error} = await sb.from('assessment_results').insert(payload);
+    if(el) el.textContent = error
+      ? '결과 저장에 실패했어요 (네트워크 또는 설정을 확인해주세요)'
+      : '✓ 결과가 익명으로 저장되었습니다';
+    if(error) console.error(error);
+  }catch(e){
+    console.error(e);
+    if(el) el.textContent = '결과 저장에 실패했어요';
+  }
+}
+
+// ---------------- 결과 렌더 ----------------
+function showResults(){
+  window.removeEventListener('keydown', keyHandler);
+  const {symptoms, causes, totalSym} = score();
+  const sev = severityOf(totalSym);
+  const temp = (36.5 * (1 - totalSym/100)).toFixed(1);
+  const isCold = totalSym >= 50;
+  const topCause = causes[0];
+  const sol = SOLUTIONS[topCause.name];
+
+  const barRow = (s, hot) => `
+    <div class="bar-row">
+      <div class="bar-head"><b>${s.name}</b><span>${s.pct}점</span></div>
+      <div class="bar-track"><div class="bar-fill${hot && s.pct>=50 ? ' hot':''}" data-w="${s.pct}"></div></div>
+    </div>`;
+
+  document.getElementById('quiz').classList.add('hidden');
+  const r = document.getElementById('result');
+  r.classList.remove('hidden');
+  r.innerHTML = `
+    <div class="result-hero fade">
+      <div class="thermo">
+        <div class="tube"><div class="fill${isCold?' cold':''}" id="thermoFill"></div></div>
+        <div class="bulb" id="thermoBulb">${isCold?'🥶':'🙂'}</div>
+      </div>
+      <div class="temp-num">${temp}<small>°C</small></div>
+      <div style="font-size:.85rem;color:var(--ink-soft)">지금 내 마음의 온도 · ${sev.temp}</div>
+      <span class="severity-tag" style="background:${sev.color}">${sev.label} 단계 · 증상 점수 ${totalSym}점</span>
+      <p class="desc">${sev.msg}</p>
+    </div>
+
+    <div class="section-card fade">
+      <h3>🧊 증상 점수 — 어디가 가장 얼어 있나요?</h3>
+      ${symptoms.map(s=>barRow(s,true)).join('')}
+      <p style="font-size:.78rem;color:#8AA3B4;margin-top:10px">각 하위 척도 0~100점 · MBI(감정적 소진·비인격화·개인 성취감 저하) + BAT(인지 저하·정서적 통제력 저하) 혼합형</p>
+    </div>
+
+    <div class="section-card fade">
+      <h3>🔍 원인 점수 — 무엇이 나를 얼리고 있나요?</h3>
+      ${causes.map(s=>barRow(s,true)).join('')}
+    </div>
+
+    <div class="section-card top-cause fade">
+      <div class="cause-label">가장 큰 원인 · ${topCause.name} ${topCause.pct}점</div>
+      <h3>${sol.title}</h3>
+      <ul>${sol.tips.map(t=>'<li>'+t+'</li>').join('')}</ul>
+      ${sev.label==='위험' || sev.label==='경고' ? `
+      <div class="pro-note">💬 지금 단계에서는 셀프 케어와 함께, 상담 등 전문적인 도움을 받는 것도 좋은 선택이에요. 도움을 구하는 것은 회복의 가장 빠른 길일 수 있습니다.</div>` : ''}
+    </div>
+
+    <button class="btn restart" onclick="location.reload()">다시 검사하기</button>\n    <p class="disclaimer" id="saveStatus"></p>
+    <p class="disclaimer">본 결과는 선별 목적의 참고 자료이며, 의학적 진단을 대체하지 않습니다.</p>
+  `;
+
+  saveResult({
+    symptom_total: totalSym,
+    severity: sev.label,
+    emotion_temp: parseFloat(temp),
+    symptom_scores: Object.fromEntries(symptoms.map(s=>[s.name, s.pct])),
+    cause_scores: Object.fromEntries(causes.map(s=>[s.name, s.pct])),
+    top_cause: topCause.name,
+    answers: answers
+  });
+
+  requestAnimationFrame(()=>{
+    setTimeout(()=>{
+      document.getElementById('thermoFill').style.height = Math.max(8, 100 - totalSym) + '%';
+      if(isCold) document.getElementById('thermoBulb').style.background = '#D6E9F2';
+      else document.getElementById('thermoBulb').style.background = '#FDE3D2';
+      document.querySelectorAll('.bar-fill').forEach(el=>{
+        el.style.width = el.dataset.w + '%';
+      });
+    }, 60);
+  });
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+</script>
+</body>
+</html>
