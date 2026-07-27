@@ -390,6 +390,7 @@ const SOLUTIONS = {
 let current = 0;
 const answers = new Array(QUESTIONS.length).fill(null);
 let lastResult = {};
+let lastAssessmentId = null;
 
 function startQuiz(){
   document.getElementById('intro').classList.add('hidden');
@@ -473,7 +474,10 @@ async function saveResult(payload){
       return;
     }
     const sb = window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY);
-    const {error} = await sb.from('assessment_results').insert(payload);
+    const {data, error} = await sb.from('assessment_results').insert(payload).select('id');
+    if(data && data.length > 0) {
+      lastAssessmentId = data[0].id;
+    }
     if(el) el.textContent = error
       ? '결과 저장에 실패했어요'
       : '✓ 결과가 익명으로 저장되었습니다';
@@ -512,7 +516,7 @@ async function submitConsultation(){
     const sb = window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY);
     const payload = {
       name, email, phone, age: age || null, job: job || null,
-      assessment_results: lastResult,
+      assessment_results_id: lastAssessmentId,
       submitted_at: new Date().toISOString()
     };
     
