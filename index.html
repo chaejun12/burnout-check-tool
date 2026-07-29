@@ -405,6 +405,8 @@ let current = 0;
 const answers = new Array(QUESTIONS.length).fill(null);
 let lastResult = {};
 let lastAssessmentId = null;
+let isSubmitting = false;   // 마지막 문항 이후 중복 입력(빠른 클릭/키반복) 방지
+let resultsShown = false;   // showResults 중복 실행 방지
 
 function startQuiz(){
   document.getElementById('intro').classList.add('hidden');
@@ -444,11 +446,14 @@ function renderQuestion(){
 }
 
 function selectAnswer(v){
+  if(isSubmitting) return; // 마지막 응답 처리 중에는 추가 입력 무시
   answers[current] = v;
   if(current < QUESTIONS.length - 1){
     current++;
     setTimeout(renderQuestion, 140);
   } else {
+    isSubmitting = true;
+    window.removeEventListener('keydown', keyHandler); // 즉시 키 입력 차단
     setTimeout(showResults, 200);
   }
 }
@@ -602,6 +607,8 @@ async function submitConsultation(){
 }
 
 function showResults(){
+  if(resultsShown) return; // 이미 결과가 표시/저장된 경우 재실행 방지
+  resultsShown = true;
   window.removeEventListener('keydown', keyHandler);
   const {symptoms, causes, totalSym} = score();
   const symClass = classify(symptoms);
